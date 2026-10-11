@@ -1,7 +1,6 @@
 """Reminder wording. Tone escalates with how overdue the invoice is."""
 from urllib.parse import quote
 
-from django.utils.formats import number_format
 
 
 def pick_tone(days_overdue):
@@ -16,7 +15,7 @@ def pick_tone(days_overdue):
 
 def draft(invoice, profile):
     d = invoice.debtor
-    amt = f'KES {number_format(invoice.balance, 0, use_l10n=True)}'
+    amt = f'KES {int(invoice.balance):,}'
     sender = profile.business_name or 'us'
     pay = f' You can pay via {profile.pay_instructions}.' if profile.pay_instructions else ''
     tone = pick_tone(invoice.days_overdue)
