@@ -45,3 +45,23 @@ class LedgerTests(TestCase):
         self.client.login(username='bob', password='pw')
         self.assertEqual(self.client.get(reverse('invoice', args=[inv.pk])).status_code, 404)
         self.assertEqual(self.client.get(reverse('dashboard')).status_code, 200)
+
+
+class QuickAddTests(TestCase):
+    def test_parse(self):
+        from .quickadd import parse
+        today = date(2026, 10, 11)  # a Sunday
+        r = parse('Kamau Hotel 18,500 milk fri', today)
+        self.assertEqual((r['name'], r['amount'], r['description']), ('Kamau Hotel', 18500, 'milk'))
+        self.assertEqual(r['due_date'], date(2026, 10, 16))
+        r = parse('Njeri 0712345678 7k eggs 20/10', today)
+        self.assertEqual((r['phone'], r['amount'], r['due_date']),
+                         ('0712345678', 7000, date(2026, 10, 20)))
+        self.assertIsNone(parse('just words', today))
+
+    def test_signup_and_quick_add(self):
+        r = self.client.post(reverse('signup'), {
+            'username': 'newsup', 'password1': 'Str0ng-pass-91x', 'password2': 'Str0ng-pass-91x'})
+        self.assertRedirects(r, reverse('settings'))
+        self.client.post(reverse('quick'), {'line': 'Baraka 9600 oil kesho'})
+        self.assertEqual(Invoice.objects.get().debtor.name, 'Baraka')

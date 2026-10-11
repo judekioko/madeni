@@ -6,7 +6,12 @@
   <div class="card"><div class="muted">Overdue</div><div class="big red">KES {{ total_overdue|floatformat:0|intcomma }}</div></div>
   <div class="card"><div class="muted">Due in 7 days</div><div class="big amber">KES {{ total_week|floatformat:0|intcomma }}</div></div>
 </div>
-<a class="btn" href="{% url 'add' %}">+ Someone owes me</a>
+{% if messages %}{% for m in messages %}<p class="red">{{ m }}</p>{% endfor %}{% endif %}
+<form method="post" action="{% url 'quick' %}" class="card">{% csrf_token %}
+  <label for="line" style="margin-top:0">Quick add</label>
+  <input id="line" name="line" placeholder="Kamau Hotel 18500 milk fri" autocomplete="off">
+  <p class="muted" style="margin-bottom:0">Name, amount, what for, due day (fri, 20/10, kesho). Phone optional. <a href="{% url 'add' %}">Full form</a></p>
+</form>
 
 
 <h2>Overdue — chase these first</h2>

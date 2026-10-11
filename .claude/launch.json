@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "madeni",
+      "runtimeExecutable": "C:\Users\ADMIN\Downloads\madeni\.venv\Scripts\python.exe",
+      "runtimeArgs": ["manage.py", "runserver", "8100", "--noreload"],
+      "port": 8100
+    }
+  ]
+}

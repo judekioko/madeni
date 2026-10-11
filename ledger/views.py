@@ -1,11 +1,14 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
+from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from . import reminders
+from . import quickadd, reminders
 from .forms import InvoiceForm, PaymentForm, ProfileForm
 from .models import Debtor, Invoice, Profile, Reminder
 
@@ -34,23 +37,47 @@ def dashboard(request):
     })
 
 
+def _create_invoice(user, name, phone, description, amount, due_date):
+    debtor = Debtor.objects.filter(owner=user, name__iexact=name).first()
+    if debtor is None:
+        debtor = Debtor.objects.create(owner=user, name=name, phone=phone)
+    elif phone and not debtor.phone:
+        debtor.phone = phone
+        debtor.save()
+    return Invoice.objects.create(debtor=debtor, description=description,
+                                  amount=amount, due_date=due_date)
+
+
 @login_required
 def add_invoice(request):
     form = InvoiceForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         cd = form.cleaned_data
-        name = cd['debtor_name'].strip()
-        debtor = Debtor.objects.filter(owner=request.user, name__iexact=name).first()
-        if debtor is None:
-            debtor = Debtor.objects.create(owner=request.user, name=name, phone=cd['phone'])
-        elif cd['phone'] and not debtor.phone:
-            debtor.phone = cd['phone']
-            debtor.save()
-        inv = Invoice.objects.create(debtor=debtor, description=cd['description'],
-                                     amount=cd['amount'], due_date=cd['due_date'])
+        inv = _create_invoice(request.user, cd['debtor_name'].strip(), cd['phone'],
+                              cd['description'], cd['amount'], cd['due_date'])
         return redirect('invoice', pk=inv.pk)
     names = Debtor.objects.filter(owner=request.user).values_list('name', flat=True)
     return render(request, 'add.html', {'form': form, 'names': names})
+
+
+@login_required
+@require_POST
+def quick_add(request):
+    parsed = quickadd.parse(request.POST.get('line', ''))
+    if not parsed:
+        messages.error(request, 'Could not read that. Try: Kamau Hotel 18500 milk fri')
+        return redirect('dashboard')
+    inv = _create_invoice(request.user, parsed['name'], parsed['phone'],
+                          parsed['description'], parsed['amount'], parsed['due_date'])
+    return redirect('invoice', pk=inv.pk)
+
+
+def signup(request):
+    form = UserCreationForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        login(request, form.save())
+        return redirect('settings')
+    return render(request, 'registration/signup.html', {'form': form})
 
 
 @login_required
