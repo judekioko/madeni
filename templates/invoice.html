@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+<a href="{% url 'dashboard' %}">← Back</a>
+<h1>{{ inv.debtor.name }}</h1>
+<div class="card">
+  <div class="muted">{{ inv.description }} · due {{ inv.due_date|date:"j M Y" }}</div>
+  <div class="big {% if inv.days_overdue %}red{% endif %}">KES {{ inv.balance|floatformat:0|intcomma }}</div>
+  <div class="muted">of KES {{ inv.amount|floatformat:0|intcomma }}
+    {% if inv.is_settled %}· <span class="green">Settled</span>{% elif inv.days_overdue %}· <span class="red">{{ inv.days_overdue }} days overdue</span>{% endif %}</div>
+</div>
+
+{% if not inv.is_settled %}
+<h2>Reminder ({{ tone }})</h2>
+<div class="card">
+  <textarea id="msg" readonly>{{ text }}</textarea>
+  <p>
+    {% if wa %}<a class="btn" href="{{ wa }}" target="_blank" rel="noopener">Open in WhatsApp</a>{% endif %}
+    <button type="button" class="btn alt" onclick="navigator.clipboard.writeText(document.getElementById('msg').value)">Copy</button>
+  </p>
+  {% if not wa %}<p class="muted">Add a phone number to the person to get a WhatsApp link.</p>{% endif %}
+  <form method="post" action="{% url 'sent' inv.pk %}">{% csrf_token %}<button class="btn alt">I sent it</button></form>
+</div>
+
+<h2>Record a payment</h2>
+<form method="post" class="card">{% csrf_token %}
+  {% for f in pform %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}{% endfor %}
+  <p><button>Save payment</button></p>
+</form>
+{% endif %}
+
+<h2>History</h2>
+{% for p in inv.payments.all %}<div class="card row"><span>Paid {{ p.date|date:"j M" }} {{ p.note }}</span><strong class="green">KES {{ p.amount|floatformat:0|intcomma }}</strong></div>{% endfor %}
+{% for r in inv.reminders.all %}<div class="card muted">Reminder sent ({{ r.tone }}) {{ r.sent_at|date:"j M, H:i" }}</div>{% endfor %}
+{% endblock %}

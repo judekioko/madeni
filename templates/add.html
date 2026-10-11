@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Someone owes me</h1>
+<form method="post" class="card">{% csrf_token %}
+  {% for f in form %}
+    <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+    {{ f }}
+    {{ f.errors }}
+  {% endfor %}
+  <datalist id="people">{% for n in names %}<option value="{{ n }}">{% endfor %}</datalist>
+  <p><button>Save &amp; draft reminder</button></p>
+</form>
+<script>document.getElementById('id_debtor_name').setAttribute('list','people');</script>
+{% endblock %}

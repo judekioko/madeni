@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+<div class="stats">
+  <div class="card"><div class="muted">Total owed to you</div><div class="big">KES {{ total_owed|floatformat:0|intcomma }}</div></div>
+  <div class="card"><div class="muted">Overdue</div><div class="big red">KES {{ total_overdue|floatformat:0|intcomma }}</div></div>
+  <div class="card"><div class="muted">Due in 7 days</div><div class="big amber">KES {{ total_week|floatformat:0|intcomma }}</div></div>
+</div>
+<a class="btn" href="{% url 'add' %}">+ Someone owes me</a>
+
+
+<h2>Overdue — chase these first</h2>
+{% for i in overdue %}
+  <a href="{% url 'invoice' i.pk %}" style="color:inherit"><div class="card row">
+    <div><strong>{{ i.debtor.name }}</strong><div class="muted">{{ i.description }}</div></div>
+    <div style="text-align:right"><strong>KES {{ i.balance|floatformat:0|intcomma }}</strong><div class="muted red">{{ i.days_overdue }} days late</div></div>
+  </div></a>
+{% empty %}<p class="muted">Nothing overdue. 🎉</p>{% endfor %}
+
+<h2>Due this week</h2>
+{% for i in week %}
+  <a href="{% url 'invoice' i.pk %}" style="color:inherit"><div class="card row">
+    <div><strong>{{ i.debtor.name }}</strong><div class="muted">{{ i.description }}</div></div>
+    <div style="text-align:right"><strong>KES {{ i.balance|floatformat:0|intcomma }}</strong><div class="muted">{{ i.due_date|date:"D j M" }}</div></div>
+  </div></a>
+{% empty %}<p class="muted">Nothing due this week.</p>{% endfor %}
+
+<h2>Later</h2>
+{% for i in later %}
+  <a href="{% url 'invoice' i.pk %}" style="color:inherit"><div class="card row">
+    <div><strong>{{ i.debtor.name }}</strong><div class="muted">{{ i.description }}</div></div>
+    <div style="text-align:right"><strong>KES {{ i.balance|floatformat:0|intcomma }}</strong><div class="muted">{{ i.due_date|date:"j M" }}</div></div>
+  </div></a>
+{% empty %}<p class="muted">Nothing scheduled.</p>{% endfor %}
+{% endblock %}

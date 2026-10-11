@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+<h1>People</h1>
+{% for d, owed, late in rows %}
+<div class="card row">
+  <div><strong>{{ d.name }}</strong><div class="muted">{{ d.phone|default:"no phone" }}</div></div>
+  <div style="text-align:right">
+    <strong>KES {{ owed|floatformat:0|intcomma }}</strong>
+    <div class="muted">{% if late is None %}no payment history{% elif late == 0 %}<span class="green">pays on time</span>{% else %}<span class="amber">pays ~{{ late }} days late</span>{% endif %}</div>
+  </div>
+</div>
+{% empty %}<p class="muted">No one yet.</p>{% endfor %}
+{% endblock %}
