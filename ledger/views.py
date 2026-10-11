@@ -4,12 +4,11 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from . import quickadd, reminders
-from .forms import InvoiceForm, PaymentForm, ProfileForm
+from .forms import InvoiceForm, PaymentForm, ProfileForm, SignupForm
 from .models import Debtor, Invoice, Profile, Reminder
 
 
@@ -73,7 +72,7 @@ def quick_add(request):
 
 
 def signup(request):
-    form = UserCreationForm(request.POST or None)
+    form = SignupForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         login(request, form.save())
         return redirect('settings')

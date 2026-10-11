@@ -61,7 +61,23 @@ class QuickAddTests(TestCase):
 
     def test_signup_and_quick_add(self):
         r = self.client.post(reverse('signup'), {
-            'username': 'newsup', 'password1': 'Str0ng-pass-91x', 'password2': 'Str0ng-pass-91x'})
+            'username': 'newsup', 'email': 'n@example.com', 'password1': 'Str0ng-pass-91x', 'password2': 'Str0ng-pass-91x'})
         self.assertRedirects(r, reverse('settings'))
         self.client.post(reverse('quick'), {'line': 'Baraka 9600 oil kesho'})
         self.assertEqual(Invoice.objects.get().debtor.name, 'Baraka')
+
+
+class SummaryTests(TestCase):
+    def test_summary_and_email(self):
+        from django.core import mail
+        from . import summary
+        u = User.objects.create_user('amina', 'amina@example.com', 'pw')
+        self.assertIsNone(summary.build(u))
+        d = Debtor.objects.create(owner=u, name='Kamau Hotel')
+        Invoice.objects.create(debtor=d, description='Milk', amount=18500,
+                               due_date=date.today() - timedelta(days=4))
+        subject, body = summary.build(u)
+        self.assertIn('1 overdue', subject)
+        self.assertIn('Kamau Hotel: KES 18,500, 4 days late', body)
+        self.assertTrue(summary.send(u))
+        self.assertEqual(mail.outbox[0].to, ['amina@example.com'])
